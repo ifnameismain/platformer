@@ -81,7 +81,7 @@ def load_tile_sequence(descriptor, color_key=None):
     animation_paths = []
     addons = {}
     for path in glob.glob(descriptor.replace('\\', '/') + '/*'):
-        animations.append(pg.image.load(path).convert())
+        animations.append(pg.image.load(path).convert_alpha())
         path = path.replace('textures', 'texture_addons')
         animation_paths.append(path)
         if os.path.isfile(path):

@@ -138,7 +138,8 @@ class GameScreen(_Screen):
         self.map = Map(UNSCALED_SIZE[0], UNSCALED_SIZE[1], 16)
         self.map_floor = len(self.map.map) * self.map.tile_size
         self.keys_down = []
-        self.water = Water((200, 100), (300, 100))
+        self.water = []
+        self.group_water_tiles()
 
     def run(self):
         self.player.check_movement()
@@ -151,7 +152,34 @@ class GameScreen(_Screen):
             self.player.y = 0
         self.player.offset[1] = self.player.y - self.player.y_middle + 16
         self.player.offset[0] = self.player.x - self.player.x_middle + 8
-        self.water.run([self.player.x, self.player.y, self.player.w, self.player.h], self.player.v[1], self.player.v[0])
+        if self.water:
+            for x in self.water:
+                x.run([self.player.x, self.player.y, self.player.w, self.player.h], self.player.v[1], self.player.v[0])
+
+    def group_water_tiles(self):
+        index = 0
+        water_list = []
+        avoid_list = []
+        for ind, x in enumerate(self.map.tile_paths):
+            if 'water' in x:
+                index = ind
+                break
+        for row_count, row in enumerate(self.map.map):
+            start = -1
+            for tile_count, tile in enumerate(row[:-1]):
+                if tile == index and (row_count - 1, tile_count) not in avoid_list:
+                    avoid_list.append((row_count, tile_count))
+                    if start == -1:
+                        start = tile_count
+                    if row[tile_count + 1] != index:
+                        water_list.append((start, tile_count, row_count))
+                        for x in range(start, tile_count+1):
+                            row[x] = -1
+
+                        start = -1
+        self.water = [Water((x[0]*self.map.tile_size, x[2]*self.map.tile_size + self.map.tile_size/2),
+                            (x[1]*self.map.tile_size + self.map.tile_size,
+                             x[2]*self.map.tile_size + self.map.tile_size/2)) for x in water_list]
 
     def check_event(self, event):
         if event.type == pg.KEYDOWN:
@@ -165,9 +193,11 @@ class GameScreen(_Screen):
 
     def draw(self):
         self.parent.window.fill((204, 255, 255))
-        self.map.blit_map(self.parent.window, self.player.offset)
         self.player.draw_centre(self.parent.window)
-        self.water.draw(self.parent.window, self.player.offset)
+        self.map.blit_map(self.parent.window, self.player.offset)
+        if self.water:
+            for x in self.water:
+                x.draw(self.parent.window, self.player.offset)
 
 
 class Controller:

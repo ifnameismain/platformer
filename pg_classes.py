@@ -8,11 +8,12 @@ from pg_funcs import *
 class Water:
     def __init__(self, p1, p2):
         self.p1 = p1[0]
-        self.target_height = p1[1]
+        self.surface_height = p1[1] - 8
+        self.target_height = 8
         self.p2 = p2[0]
         self.divider_amount = 2
-        self.length = (self.p2-self.p1)//self.divider_amount
-        self.points = [(self.p1+self.divider_amount*x, self.target_height) for x in range(self.length)]
+        self.length = (self.p2-self.p1)//self.divider_amount + 1
+        self.points = [(self.divider_amount*x, self.target_height) for x in range(self.length+1)]
         self.springs = [self.target_height for _ in range(self.length)]
         self.distances = [0]*len(self.springs)
         self.speeds = [0]*len(self.springs)
@@ -60,15 +61,15 @@ class Water:
             self.started = False
         elif 0 > self.last_vh and vh >= 0:
             self.started = False
-        if self.points[0][0] < ex and self.points[-1][0] > ex + ew:
-            if ey < self.points[0][1] < ey + eh:
+        if self.points[0][0] < ex - self.p1 and self.points[-1][0] > ex + ew - self.p1:
+            if ey - self.surface_height < self.points[0][1] < ey + eh - self.surface_height:
                 if vh not in [0, 0.2] and not self.started:
-                    self.speeds[(i-self.p1)//self.divider_amount] = 7 *(vh/abs(vh))
+                    self.speeds[(i-self.p1)//self.divider_amount] = 5 *(vh/abs(vh))
                     self.started = True
                     self.timer = 0
                 elif vx != 0:
                     if -2 < self.speeds[(i + 6 - self.p1) // self.divider_amount] < 2:
-                        self.speeds[(i + 6*int((vx / abs(vx))) - self.p1) // self.divider_amount] = -0.6
+                        self.speeds[(i + 6*int((vx / abs(vx))) - self.p1) // self.divider_amount] = -0.4
                         self.timer = 0
         self.last_vh = vh
         self.spring_set()
@@ -98,7 +99,15 @@ class Water:
             self.distances[i] = 0
 
     def draw(self, surface, offset):
-        pg.draw.lines(surface, (0, 0, 255), False, [(self.p1 + self.divider_amount*x - offset[0], self.heights[x] - offset[1]) for x in range(self.length)])
+        s = pg.Surface((self.p2-self.p1, 16))
+        points = [(self.points[x][0], self.heights[x]) for x in range(self.length)]
+        points.append(((self.length)*self.divider_amount, 16))
+        points.insert(0, (0,16))
+        pg.draw.polygon(s, (35,150,230), points)
+        pg.draw.lines(s, (255, 255, 255), False, points[1:-1])
+        s.set_colorkey((0,0,0))
+        s.set_alpha(100)
+        surface.blit(s, (self.p1-offset[0], self.surface_height - offset[1]))
 
 
 class Physics2D:
