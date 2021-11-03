@@ -1,6 +1,7 @@
 import os
 from pg_classes import *
-
+from physics import *
+import time
 # GLOBALS
 GAME_CAPTION = "Platformer"
 UNSCALED_SIZE = (480, 272)
@@ -140,6 +141,7 @@ class GameScreen(_Screen):
         self.keys_down = []
         self.water = []
         self.group_water_tiles()
+        # self.cloth = Cloth(100,100,60,80)
 
     def run(self):
         self.player.check_movement()
@@ -152,6 +154,7 @@ class GameScreen(_Screen):
             self.player.y = 0
         self.player.offset[1] = self.player.y - self.player.y_middle + 16
         self.player.offset[0] = self.player.x - self.player.x_middle + 8
+        self.cloth.update()
         if self.water:
             for x in self.water:
                 x.run([self.player.x, self.player.y, self.player.w, self.player.h], self.player.v[1], self.player.v[0])
@@ -198,6 +201,7 @@ class GameScreen(_Screen):
         if self.water:
             for x in self.water:
                 x.draw(self.parent.window, self.player.offset)
+        self.cloth.draw(self.parent.window)
 
 
 class Controller:
@@ -234,7 +238,7 @@ if __name__ == '__main__':
     pg.font.init()
     FONTS = {"BIG": pg.font.SysFont("arial", 100, True),
              "MEDIUM": pg.font.SysFont("arial", 50, True),
-             "SMALL": pg.font.SysFont("arial", 30, True)}
+              "SMALL": pg.font.SysFont("arial", 30, True)}
     pg.display.set_caption(GAME_CAPTION)
     display_info = pg.display.Info()
     SCREEN_SIZE = (display_info.current_w, display_info.current_h)
